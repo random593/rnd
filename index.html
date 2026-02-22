@@ -1,150 +1,35 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tarot Drawer</title>
-
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icons/icon-192.png">
-
-  <style>
-    :root { --fg:#111; --bg:#fafafa; --muted:#6b7280; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background:var(--bg); color:var(--fg); }
-    .wrap { max-width:860px; margin:0 auto; padding:16px; }
-    h1 { font-size:22px; margin:0 0 8px; }
-    .hint { color:var(--muted); font-size:14px; margin:0 0 12px; }
-    .card { margin:12px 0 16px; padding:16px; border:1px solid #e5e7eb; border-radius:12px; background:#fff; }
-
-    .draw { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-
-    button, select {
-      border:1px solid #111;
-      background:#111;
-      color:#fff;
-      padding:10px 14px;
-      border-radius:10px;
-      font-size:15px;
-      cursor:pointer;
-    }
-
-    select { background:#fff; color:#111; border-color:#ccc; }
-
-    .imageBox { text-align:center; margin-top:10px; }
-    .imageBox img {
-      max-width:100%;
-      border-radius:12px;
-      box-shadow:0 4px 12px rgba(0,0,0,0.15);
-      cursor:pointer;
-    }
-
-    #current a { font-weight:600; text-decoration:none; color:#0b57d0; }
-    #current a:hover { text-decoration:underline; }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <h1>Tarot Drawer</h1>
-    <p class="hint">Tap the card to draw.</p>
-
-    <div class="card">
-      <div class="draw">
-        <button id="drawBtn">Draw</button>
-        <button id="resetBtn" style="display:none;">Reset</button>
-
-        <select id="sitePick">
-          <option value="tarotcom">Tarot.com</option>
-          <option value="biddy">Biddy Tarot</option>
-          <option value="labyrinthos">Labyrinthos</option>
-          <option value="keen">Keen</option>
-        </select>
-
-        <div id="current">
-          <a id="currentLink">Tap card</a>
-          <span id="currentArcana"></span>
-        </div>
-      </div>
-
-      <div class="imageBox">
-        <img id="cardImage" src="images/back.jpg" alt="Card"/>
-      </div>
-    </div>
-  </div>
-
-<script>
-const majors = [
-  "The Fool","The Magician","The High Priestess","The Empress","The Emperor","The Hierophant","The Lovers","The Chariot",
-  "Strength","The Hermit","Wheel of Fortune","Justice","The Hanged Man","Death","Temperance","The Devil",
-  "The Tower","The Star","The Moon","The Sun","Judgement","The World"
-];
-
-const ranks = ["Ace","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Page","Knight","Queen","King"];
-const suits = ["Wands","Cups","Swords","Pentacles"];
-
-function buildDeck(){
-  const deck = [];
-  majors.forEach(name => deck.push({ name, arcana:"Major Arcana" }));
-  suits.forEach(suit => ranks.forEach(rank => deck.push({
-    name: `${rank} of ${suit}`,
-    arcana:"Minor Arcana"
-  })));
-  return deck;
-}
-const deck = buildDeck();
-
-const slugify = s => s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
-const imagePath = name => `images/${slugify(name)}.jpg`;
-
-const siteBuilders = {
-  tarotcom: {
-    label: "Tarot.com",
-    url: card => `https://www.tarot.com/tarot/cards/${slugify(card.name.replace("Pentacles","Coins"))}`
-  },
-  biddy: {
-    label: "Biddy Tarot",
-    url(card){
-      if (card.arcana === "Major Arcana"){
-        return `https://biddytarot.com/tarot-card-meanings/major-arcana/${slugify(card.name.replace(/^The /,''))}/`;
-      }
-      const [rank, suit] = card.name.split(" of ");
-      return `https://biddytarot.com/tarot-card-meanings/minor-arcana/suit-of-${slugify(suit)}/${slugify(rank)}-of-${slugify(suit)}/`;
-    }
-  },
-  labyrinthos: {
-    label: "Labyrinthos",
-    url: card => `https://labyrinthos.co/blogs/tarot-card-meanings-list/${slugify(card.name)}-meaning-tarot-card-meanings`
-  },
-  keen: {
-    label: "Keen",
-    url: card => `https://www.keen.com/articles/tarot/${slugify(card.name)}-tarot-card`
-  }
-};
-
-const drawBtn = document.getElementById('drawBtn');
-const resetBtn = document.getElementById('resetBtn');
-const currentLink = document.getElementById('currentLink');
-const currentArcana = document.getElementById('currentArcana');
-const sitePick = document.getElementById('sitePick');
-const cardImage = document.getElementById('cardImage');
+const flipper = document.getElementById("flipper");
+const cardFront = document.getElementById("cardFront");
+const cardBack = document.getElementById("cardBack");
+const drawBtn = document.getElementById("drawBtn");
+const resetBtn = document.getElementById("resetBtn");
+const currentLink = document.getElementById("currentLink");
+const currentArcana = document.getElementById("currentArcana");
+const hint = document.getElementById("hint");
+const sitePick = document.getElementById("sitePick");
 
 let lastCard = null;
 
 function showBack(){
   lastCard = null;
-  cardImage.src = "images/back.jpg";
-  currentLink.textContent = "Tap card";
+  flipper.classList.remove("flipped");
+  hint.textContent = "Tap the card";
+  currentLink.textContent = "Tap the card";
   currentLink.removeAttribute("href");
   currentArcana.textContent = "";
   drawBtn.textContent = "Draw";
   resetBtn.style.display = "none";
 }
 
-function updateCard(){
-  const site = sitePick.value;
-  const url = siteBuilders[site].url(lastCard);
+function draw(){
+  lastCard = deck[Math.floor(Math.random()*deck.length)];
 
-  cardImage.onerror = () => cardImage.src = "images/back.jpg";
-  cardImage.src = imagePath(lastCard.name);
+  const img = imagePath(lastCard.name);
+  cardBack.src = img;
+
+  flipper.classList.add("flipped");
+
+  const url = siteBuilders[sitePick.value].url(lastCard);
 
   currentLink.textContent = lastCard.name;
   currentLink.href = url;
@@ -152,32 +37,29 @@ function updateCard(){
 
   currentArcana.textContent = ` — ${lastCard.arcana}`;
 
-  drawBtn.textContent = "Draw another";
+  hint.textContent = "Tap the card";
+  drawBtn.textContent = "Draw again";
   resetBtn.style.display = "inline-block";
 }
 
-function draw(){
-  lastCard = deck[Math.floor(Math.random()*deck.length)];
-  updateCard();
+function openMeaning(){
+  if (!lastCard) return;
+  const url = siteBuilders[sitePick.value].url(lastCard);
+  window.open(url, "_blank");
 }
 
-drawBtn.addEventListener('click', draw);
-resetBtn.addEventListener('click', showBack);
+drawBtn.addEventListener("click", draw);
+resetBtn.addEventListener("click", showBack);
 
-cardImage.addEventListener('click', () => {
+flipper.addEventListener("click", () => {
   if (!lastCard) draw();
-  else window.open(siteBuilders[sitePick.value].url(lastCard), "_blank");
+  else openMeaning();
 });
 
-sitePick.addEventListener('change', () => {
-  if (lastCard) updateCard();
+sitePick.addEventListener("change", () => {
+  if (!lastCard) return;
+  const url = siteBuilders[sitePick.value].url(lastCard);
+  currentLink.href = url;
 });
 
 showBack();
-
-if ('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js');
-}
-</script>
-</body>
-</html>
