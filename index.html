@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Tarot Drawer</title>
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <style>
+    :root { --fg:#111; --bg:#f4f4f9; --accent:#0b57d0; }
+    body { 
+      margin:0; font-family: system-ui, sans-serif; 
+      background:var(--bg); color:var(--fg); 
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 100vh; text-align: center;
+    }
+    .card-display {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      width: 80%;
+      max-width: 400px;
+      margin-bottom: 20px;
+    }
+    h1 { font-size: 1.2rem; color: #6b7280; margin-bottom: 2rem; }
+    #current { font-size: 1.8rem; font-weight: bold; margin-bottom: 10px; }
+    #current a { color: var(--accent); text-decoration: none; border-bottom: 2px solid #e5e7eb; }
+    .arcana { font-size: 0.9rem; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
+    
+    button { 
+      appearance:none; border:none; background:var(--fg); color:#fff; 
+      padding: 15px 30px; border-radius: 50px; font-size: 16px; font-weight: 600;
+      cursor: pointer; transition: transform 0.1s;
+    }
+    button:active { transform: scale(0.95); }
+    .footer-links { margin-top: 30px; font-size: 12px; opacity: 0.5; }
+  </style>
+</head>
+<body>
+
+  <h1>Your Daily Draw</h1>
+
+  <div class="card-display">
+    <div id="current">Focusing...</div>
+    <div id="arcana" class="arcana"></div>
+  </div>
+
+  <button id="drawBtn">Draw Again</button>
+
+  <script>
+    const majors = ["The Fool","The Magician","The High Priestess","The Empress","The Emperor","The Hierophant","The Lovers","The Chariot","Strength","The Hermit","Wheel of Fortune","Justice","The Hanged Man","Death","Temperance","The Devil","The Tower","The Star","The Moon","The Sun","Judgement","The World"];
+    const ranks = ["Ace","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Page","Knight","Queen","King"];
+    const suits = ["Wands","Cups","Swords","Coins"];
+
+    function slugify(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""); }
+    
+    function buildDeck(){
+      const deck = [];
+      majors.forEach(name => deck.push({ name, arcana: "Major Arcana" }));
+      suits.forEach(suit => ranks.forEach(rank => {
+        const displaySuit = suit === "Coins" ? "Pentacles" : suit;
+        deck.push({ name: `${rank} of ${displaySuit}`, arcana: "Minor Arcana", urlSuit: suit });
+      }));
+      return deck;
+    }
+    
+    const deck = buildDeck();
+
+    function draw(){
+      const card = deck[Math.floor(Math.random()*deck.length)];
+      const nameForUrl = card.urlSuit ? card.name.replace("Pentacles", card.urlSuit) : card.name;
+      const url = `https://www.tarot.com/tarot/cards/${slugify(nameForUrl)}`;
+      
+      document.getElementById('current').innerHTML = `<a href="${url}">${card.name}</a>`;
+      document.getElementById('arcana').innerText = card.arcana;
+    }
+
+    // Draw immediately when the "app" opens
+    window.onload = draw;
+    document.getElementById('drawBtn').addEventListener('click', draw);
+  </script>
+</body>
+</html>
