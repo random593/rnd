@@ -25,12 +25,6 @@ body {
   padding:16px;
 }
 
-h1 {
-  font-size:22px;
-  text-align:center;
-  margin:0 0 10px;
-}
-
 #hint {
   text-align:center;
   font-size:15px;
@@ -134,7 +128,6 @@ select {
 <body>
 <div class="wrap">
 
-<h1>Tarot</h1>
 <div id="hint">Tap the card</div>
 
 <div class="flip-container">
@@ -144,14 +137,14 @@ select {
   </div>
 </div>
 
-<div class="controls">
-  <button id="drawBtn">Draw</button>
-  <button id="resetBtn" style="display:none;">Reset</button>
+<div id="current">
+  <a id="currentLink"></a>
+  <div id="currentArcana"></div>
 </div>
 
-<div id="current">
-  <a id="currentLink">Tap the card</a>
-  <div id="currentArcana"></div>
+<div class="controls">
+  <button id="drawBtn" style="display:none;">Draw again</button>
+  <button id="resetBtn" style="display:none;">Reset</button>
 </div>
 
 <div style="text-align:center;">
@@ -232,10 +225,11 @@ function renderList(){
 function showBack(){
   lastCard = null;
   flipper.classList.remove("flipped");
-  currentLink.textContent = "Tap the card";
+  currentLink.textContent = "";
   currentLink.removeAttribute("href");
   currentArcana.textContent = "";
   resetBtn.style.display = "none";
+  drawBtn.style.display = "none";
 }
 
 function draw(){
@@ -248,12 +242,21 @@ function draw(){
   currentLink.target = "_blank";
   currentArcana.textContent = lastCard.arcana;
   resetBtn.style.display = "inline-block";
+  drawBtn.style.display = "inline-block";
 }
 
 drawBtn.addEventListener("click", draw);
 resetBtn.addEventListener("click", showBack);
-flipper.addEventListener("click", () => { if (!lastCard) draw(); else window.open(siteBuilders[sitePick.value].url(lastCard), "_blank"); });
-sitePick.addEventListener("change", () => { renderList(); if (lastCard) currentLink.href = siteBuilders[sitePick.value].url(lastCard); });
+
+flipper.addEventListener("click", () => {
+  if (!lastCard) draw();
+  else window.open(siteBuilders[sitePick.value].url(lastCard), "_blank");
+});
+
+sitePick.addEventListener("change", () => {
+  renderList();
+  if (lastCard) currentLink.href = siteBuilders[sitePick.value].url(lastCard);
+});
 
 renderList();
 showBack();
